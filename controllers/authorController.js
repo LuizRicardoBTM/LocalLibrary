@@ -12,7 +12,7 @@ exports.authorList = async (req, res, next) => {
 };
 
 exports.authorDetail = async (req, res, next) => {
-    const payload = req.body;
+    const payload = req.params;
 
     try {
         const author = await Author.findById(payload.id).exec();
@@ -113,7 +113,7 @@ exports.authorCreatePost = [
 ];
 
 exports.authorDeleteGet = async (req, res, next) => {
-    const payload = req.body;
+    const payload = req.params;
     const [author, all_author_books] = await Promise.all([
         Author.findById(payload.id).exec(),
         Book.find({ author: payload.id }, "title summary").exec(),
@@ -132,7 +132,7 @@ exports.authorDeleteGet = async (req, res, next) => {
 };
 
 exports.authorDeletePost = async (req, res, next) => {
-    const payload = req.body;
+    const payload = req.params;
     const [author, all_author_books] = await Promise.all([
         Author.findById(payload.id).exec(),
         Book.find({ author: payload.id }, "title summary").exec(),
