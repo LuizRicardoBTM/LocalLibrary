@@ -81,8 +81,10 @@ exports.bookCreateGet = async (req, res, next) => {
 
 exports.bookCreatePost = [
   (req, res, next) => {
-    if(!Array.isArray(req.body.genre)){
-      req.body.name = typeof req.body.name === "undefined" ? [] : [req.body.genre];
+    const body = req.body;
+
+    if(!Array.isArray(body.genre)){
+      body.name = typeof body.name === "undefined" ? [] : [body.genre];
     }
 
     next();
@@ -113,18 +115,19 @@ exports.bookCreatePost = [
 
   async (req, res, next) => {
     const errors = validationResult(req);
+    const body = req.body;
 
     const book = new Book({
-      title: req.body.title,
-      author: req.body.author,
-      summary: req.body.summary,
-      isbn: req.body.isbn,
-      genre: req.body.genre,
+      title: body.title,
+      author: body.author,
+      summary: body.summary,
+      isbn: body.isbn,
+      genre: body.genre,
     });
 
     if(!errors.isEmpty()){
 
-      const [allAuthors, allGenres] = await Promise.all([
+      const [all_authors, all_genres] = await Promise.all([
         Author.find().sort({surname: 1}).exec(),
         Genre.find().sort({name: 1}).exec(),
       ]);
@@ -137,8 +140,8 @@ exports.bookCreatePost = [
 
       res.render("bookForm", {
         title: "Create Book",
-        authors: allAuthors,
-        genres: allGenres,
+        authors: all_authors,
+        genres: all_genres,
         book,
         errors: error.Array(),
       })
