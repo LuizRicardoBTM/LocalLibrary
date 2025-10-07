@@ -154,7 +154,7 @@ exports.authorDeletePost = async (req, res, next) => {
 exports.authorUpdateGet = async (req, res, next) => {
     const params = req.params;
 
-    const [author] = await Promise.all([
+    const author = await Promise.all([
         Author.findById(params.id).exec(),
     ]);
 
@@ -163,6 +163,7 @@ exports.authorUpdateGet = async (req, res, next) => {
         err.status = 404;
         return next(err);
     }
+    
     const  author_books  = await Book.find({ author: params.id }, "title summary").exec();
 
     res.render("authorForm", {
@@ -173,7 +174,17 @@ exports.authorUpdateGet = async (req, res, next) => {
 };
 
 exports.authorUpdatePost = [
-    body("firstName")
+    
+    async (req, res, next) => {
+        const params = req.params;
+
+        const author = await Promise.all([
+            Author.findById(params.id).exec(),
+        ]);
+        return author;
+    },
+
+    body(author.firstName)
         .trim()
         .isLength({min: 1})
         .escape()
@@ -181,7 +192,7 @@ exports.authorUpdatePost = [
         .isAlphanumeric()
         .withMessage("First name has non-alphanumeric characters."),
 
-    body("surname")
+    body(author.surname)
         .trim()
         .isLength({min: 1})
         .escape()
@@ -189,16 +200,15 @@ exports.authorUpdatePost = [
         .isAlphanumeric()
         .withMessage("Surname has non-alphanumeric characters."),
 
-    body("birthDate")
+    body(author.birthDate)
         .optional({values: "falsy"})
         .isISO8601()
         .toDate(),
 
-    body("deathDate")
+    body(author.deathDate)
         .optional({values: "falsy"})
         .isISO8601()
         .toDate(),
-
 
     async (req, res, next) => {
         const body = req.body;
@@ -217,6 +227,7 @@ exports.authorUpdatePost = [
             res.render("authorForm", {
                 title: "Update Author",
                 author,
+                error: errors.array(),
             });
         return;
         }
