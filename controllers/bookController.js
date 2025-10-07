@@ -160,9 +160,100 @@ exports.bookDeletePost = async (req, res, next) => {
 };
 
 exports.bookUpdateGet = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Book update get");
+  const [book, all_authors, all_genres] = await Promise.all([
+    Book.findById(req.params.id).populate("author").exec(),
+    Author.find().sort({ family_name: 1 }).exec(),
+    Genre.find().sort({ name: 1 }).exec(),
+  ]);
+
+  if (book === null) {
+    const err = new Error("Book not found");
+    err.status = 404;
+    return next(err);
+  }
+
+  all_genres.forEach((genre) => {
+    if (book.genre.includes(genre._id)) genre.checked = "true";
+  });
+
+  res.render("book_form", {
+    title: "Update Book",
+    authors: all_authors,
+    genres: all_genres,
+    book,
+  });
 };
 
-exports.bookUpdatePost = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Book update post");
-};
+exports.bookUpdatePost = [
+  (req, res, next) => {
+    const body = req.body;
+
+    if (!Array.isArray(body.genre)) {
+      body.genre =
+        typeof body.genre === "undefined" ? [] : [body.genre];
+    }
+    next();
+  },
+
+  body("title", "Title must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+
+  body("author", "Author must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+
+  body("summary", "Summary must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+
+  body("isbn", "ISBN must not be empty")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+
+  body("genre.*")
+    .escape(),
+
+  async (req, res, next) => {
+    const errors = validationResult(req);
+    const body = req.body;
+    const params = req.params;
+
+    const book = new Book({
+      title: body.title,
+      author: body.author,
+      summary: body.summary,
+      isbn: body.isbn,
+      genre: typeof body.genre === "undefined" ? [] : body.genre,
+      _id: params.id,
+    });
+
+    if (!errors.isEmpty()) {
+      const [all_authors, all_genres] = await Promise.all([
+        Author.find().sort({ family_name: 1 }).exec(),
+        Genre.find().sort({ name: 1 }).exec(),
+      ]);
+
+      for (const genre of all_genres) {
+        if (book.genre.indexOf(genre._id) > -1) {
+          genre.checked = "true";
+        }
+      }
+      res.render("bookForm", {
+        title: "Update Book",
+        authors: all_authors,
+        genres: all_genres,
+        book,
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    const updatedBook = await Book.findByIdAndUpdate(params.id, book, {});
+    res.redirect(updatedBook.url);
+  },
+];
