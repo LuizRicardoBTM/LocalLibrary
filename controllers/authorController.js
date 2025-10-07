@@ -152,9 +152,91 @@ exports.authorDeletePost = async (req, res, next) => {
 };
 
 exports.authorUpdateGet = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Author update get");
+    const [book, all_authors, all_genres] = await Promise.all([
+        Book.findById(req.params.id).populate("author").exec(),
+        Author.find().sort({ family_name: 1 }).exec(),
+        Genre.find().sort({ name: 1 }).exec(),
+    ]);
+
+    if (book === null) {
+        const err = new Error("Book not found");
+        err.status = 404;
+        return next(err);
+    }
+
+    all_genres.forEach((genre) => {
+        if (book.genre.includes(genre._id)) genre.checked = "true";
+    });
+
+    res.render("bookForm", {
+        title: "Update Book",
+        authors: all_authors,
+        genres: all_genres,
+        book,
+    });
 };
 
-exports.authorUpdatePost = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Author update post")
-};
+exports.authorUpdatePost = [
+    (req, res, next) => {
+        const payload = req.body;
+        if (!Array.isArray(payload.genre)) {
+        payload.genre =
+            typeof payload.genre === "undefined" ? [] : [payload.genre];
+        }
+        next();
+    },
+
+    body("title", "Title must not be empty.")
+        .trim()
+        .isLength({ min: 1 })
+        .escape(),
+    body("author", "Author must not be empty.")
+        .trim()
+        .isLength({ min: 1 })
+        .escape(),
+    body("summary", "Summary must not be empty.")
+        .trim()
+        .isLength({ min: 1 })
+        .escape(),
+    body("isbn", "ISBN must not be empty").trim().isLength({ min: 1 }).escape(),
+    body("genre.*").escape(),
+
+    async (req, res, next) => {
+        const payload = req.body;
+        const params = req.params;
+        const errors = validationResult(req);
+
+        const book = new Book({
+            title: payload.title,
+            author: payload.author,
+            summary: payload.summary,
+            isbn: payload.isbn,
+            genre: typeof payload.genre === "undefined" ? [] : payload.genre,
+            _id: params.id,
+        });
+
+        if (!errors.isEmpty()) {
+            const [allAuthors, allGenres] = await Promise.all([
+                Author.find().sort({ surnameame: 1 }).exec(),
+                Genre.find().sort({ name: 1 }).exec(),
+            ]);
+
+        for (const genre of allGenres) {
+            if (book.genre.indexOf(genre._id) > -1) {
+            genre.checked = "true";
+            }
+        }
+        res.render("bookForm", {
+            title: "Update Book",
+            authors: allAuthors,
+            genres: allGenres,
+            book,
+            errors: errors.array(),
+        });
+        return;
+        }
+
+        const updatedBook = await Book.findByIdAndUpdate(params.id, book, {});
+        res.redirect(updatedBook.url);
+    }
+];
