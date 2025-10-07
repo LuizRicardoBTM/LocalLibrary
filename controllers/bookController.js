@@ -176,7 +176,7 @@ exports.bookUpdateGet = async (req, res, next) => {
     if (book.genre.includes(genre._id)) genre.checked = "true";
   });
 
-  res.render("book_form", {
+  res.render("bookForm", {
     title: "Update Book",
     authors: all_authors,
     genres: all_genres,
