@@ -154,7 +154,7 @@ exports.authorDeletePost = async (req, res, next) => {
 exports.authorUpdateGet = async (req, res, next) => {
     const params = req.params;
 
-    const [author, ] = await Promise.all([
+    const [author] = await Promise.all([
         Author.findById(params.id).exec(),
     ]);
 
