@@ -184,7 +184,7 @@ exports.authorUpdatePost = [
         return author;
     },
 
-    body(author.firstName)
+    body(this.author.firstName)
         .trim()
         .isLength({min: 1})
         .escape()
@@ -192,7 +192,7 @@ exports.authorUpdatePost = [
         .isAlphanumeric()
         .withMessage("First name has non-alphanumeric characters."),
 
-    body(author.surname)
+    body(this.author.surname)
         .trim()
         .isLength({min: 1})
         .escape()
@@ -200,12 +200,12 @@ exports.authorUpdatePost = [
         .isAlphanumeric()
         .withMessage("Surname has non-alphanumeric characters."),
 
-    body(author.birthDate)
+    body(this.author.birthDate)
         .optional({values: "falsy"})
         .isISO8601()
         .toDate(),
 
-    body(author.deathDate)
+    body(this.author.deathDate)
         .optional({values: "falsy"})
         .isISO8601()
         .toDate(),
