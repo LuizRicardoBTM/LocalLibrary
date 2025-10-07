@@ -12,17 +12,17 @@ exports.authorList = async (req, res, next) => {
 };
 
 exports.authorDetail = async (req, res, next) => {
-    const payload = req.params;
+    const params = req.params;
 
     try {
-        const author = await Author.findById(payload.id).exec();
+        const author = await Author.findById(params.id).exec();
 
     if(author === null){
         const err = new Error("Author not found");
         err.status = 404;
         return next(err);
     }
-    const  author_books  = await Book.find({ author: payload.id }, "title summary").exec();
+    const  author_books  = await Book.find({ author: params.id }, "title summary").exec();
 
     res.render("authorDetail", {
         title: "Author Details",
@@ -113,10 +113,10 @@ exports.authorCreatePost = [
 ];
 
 exports.authorDeleteGet = async (req, res, next) => {
-    const payload = req.params;
+    const params = req.params;
     const [author, all_author_books] = await Promise.all([
-        Author.findById(payload.id).exec(),
-        Book.find({ author: payload.id }, "title summary").exec(),
+        Author.findById(params.id).exec(),
+        Book.find({ author: params.id }, "title summary").exec(),
     ]);
 
   if (author === null) {
@@ -132,10 +132,10 @@ exports.authorDeleteGet = async (req, res, next) => {
 };
 
 exports.authorDeletePost = async (req, res, next) => {
-    const payload = req.params;
+    const params = req.params;
     const [author, all_author_books] = await Promise.all([
-        Author.findById(payload.id).exec(),
-        Book.find({ author: payload.id }, "title summary").exec(),
+        Author.findById(params.id).exec(),
+        Book.find({ author: params.id }, "title summary").exec(),
     ]);
 
     if (all_author_books.length > 0) {
@@ -163,28 +163,41 @@ exports.authorUpdateGet = async (req, res, next) => {
         err.status = 404;
         return next(err);
     }
+    const  author_books  = await Book.find({ author: params.id }, "title summary").exec();
 
     res.render("authorForm", {
         title: "Update Author",
         author,
+        author_books,
     });
 };
 
 exports.authorUpdatePost = [
-    body("firstName", "First name must not be empty.")
+    body("firstName")
         .trim()
-        .isLength({ min: 1 })
-        .escape(),
-    body("surname", "Surname must not be empty.")
+        .isLength({min: 1})
+        .escape()
+        .withMessage("First name must be specified.")
+        .isAlphanumeric()
+        .withMessage("First name has non-alphanumeric characters."),
+
+    body("surname")
         .trim()
-        .isLength({ min: 1 })
-        .escape(),
+        .isLength({min: 1})
+        .escape()
+        .withMessage("Surname must be specified.")
+        .isAlphanumeric()
+        .withMessage("Surname has non-alphanumeric characters."),
+
     body("birthDate")
-        .trim()
-        .escape(),
+        .optional({values: "falsy"})
+        .isISO8601()
+        .toDate(),
+
     body("deathDate")
-        .trim()
-        .escape(),
+        .optional({values: "falsy"})
+        .isISO8601()
+        .toDate(),
 
 
     async (req, res, next) => {
