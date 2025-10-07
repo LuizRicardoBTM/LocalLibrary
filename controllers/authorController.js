@@ -154,13 +154,12 @@ exports.authorDeletePost = async (req, res, next) => {
 exports.authorUpdateGet = async (req, res, next) => {
     const params = req.params;
 
-    const [author, all_books] = await Promise.all([
-        Author.findById(params.id).populate("author").exec(),
-        Book.find().sort({ family_name: 1 }).exec(),
+    const [author, ] = await Promise.all([
+        Author.findById(params.id).exec(),
     ]);
 
     if (author === null) {
-        const err = new Error("Book not found");
+        const err = new Error("Author not found");
         err.status = 404;
         return next(err);
     }
@@ -168,7 +167,6 @@ exports.authorUpdateGet = async (req, res, next) => {
     res.render("authorForm", {
         title: "Update Author",
         author,
-        books: all_books,
     });
 };
 
@@ -194,26 +192,19 @@ exports.authorUpdatePost = [
         const params = req.params;
         const errors = validationResult(req);
 
-        const book = new Book({
-            title: body.title,
-            author: body.author,
-            summary: body.summary,
-            isbn: body.isbn,
+        const author = new Author({
+            firstName: body.firstName,
+            surname: body.surname,
+            birthDate: body.birthDate,
+            deathDate: body.deathDate,
             _id: params.id,
         });
 
         if (!errors.isEmpty()) {
-            const [all_books] = await Promise.all([
-                Book.find().sort({ name: 1 }).exec(),
-            ]);
-        
-
-        res.render("authorForm", {
-            title: "Update Author",
-            author,
-            books: all_books,
-            errors: errors.array(),
-        });
+            res.render("authorForm", {
+                title: "Update Author",
+                author,
+            });
         return;
         }
 
