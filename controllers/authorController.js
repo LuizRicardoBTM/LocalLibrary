@@ -174,17 +174,7 @@ exports.authorUpdateGet = async (req, res, next) => {
 };
 
 exports.authorUpdatePost = [
-    
-    async (req, res, next) => {
-        const params = req.params;
-
-        const author = await Promise.all([
-            Author.findById(params.id).exec(),
-        ]);
-        return author;
-    },
-
-    body(this.author.firstName)
+    body("firstName")
         .trim()
         .isLength({min: 1})
         .escape()
@@ -192,7 +182,7 @@ exports.authorUpdatePost = [
         .isAlphanumeric()
         .withMessage("First name has non-alphanumeric characters."),
 
-    body(this.author.surname)
+    body("surname")
         .trim()
         .isLength({min: 1})
         .escape()
@@ -200,12 +190,12 @@ exports.authorUpdatePost = [
         .isAlphanumeric()
         .withMessage("Surname has non-alphanumeric characters."),
 
-    body(this.author.birthDate)
+    body("birthDate")
         .optional({values: "falsy"})
         .isISO8601()
         .toDate(),
 
-    body(this.author.deathDate)
+    body("deathDate")
         .optional({values: "falsy"})
         .isISO8601()
         .toDate(),
