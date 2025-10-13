@@ -12,16 +12,17 @@ exports.authorList = async (req, res, next) => {
 };
 
 exports.authorDetail = async (req, res, next) => {
+    const params = req.params;
 
-   try {
-    const author = await Author.findById(req.params.id).exec();
+    try {
+        const author = await Author.findById(params.id).exec();
 
     if(author === null){
         const err = new Error("Author not found");
         err.status = 404;
         return next(err);
     }
-    const  author_books  = await Book.find({ author: req.params.id }, "title summary").exec();
+    const  author_books  = await Book.find({ author: params.id }, "title summary").exec();
 
     res.render("authorDetail", {
         title: "Author Details",
@@ -68,14 +69,14 @@ exports.authorCreatePost = [
 
 
     async (req, res, next) =>{
-        const payload = req.body;
         const errors = validationResult(req);
+        const body = req.body;
 
         const author = new Author({
-            firstName: payload.firstName,
-            surname: payload.surname,
-            birthDate: payload.birthDate,
-            deathDate: payload.deathDate,
+            firstName: body.firstName,
+            surname: body.surname,
+            birthDate: body.birthDate,
+            deathDate: body.deathDate,
         })
 
         if(!errors.isEmpty()){
@@ -94,9 +95,9 @@ exports.authorCreatePost = [
             return false;
         }
 
-        if(birthAndDeathDateExists(payload.birthDate, payload.deathDate)){
+        if(birthAndDeathDateExists(body.birthDate, body.deathDate)){
             
-            if(deathBeforeBirth(payload.birthDate.getTime(), payload.deathDate.getTime())){
+            if(deathBeforeBirth(body.birthDate.getTime(), body.deathDate.getTime())){
                 return res.render("authorForm", {
                         title: "Create Author",
                         author,
@@ -112,17 +113,116 @@ exports.authorCreatePost = [
 ];
 
 exports.authorDeleteGet = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Author delete get");
+    const params = req.params;
+    const [author, all_author_books] = await Promise.all([
+        Author.findById(params.id).exec(),
+        Book.find({ author: params.id }, "title summary").exec(),
+    ]);
+
+  if (author === null) {
+    res.redirect("/catalog/authors");
+    return;
+  }
+
+  res.render("authorDelete", {
+    title: "Delete Author",
+    author,
+    authorBooks: all_author_books,
+  });
 };
 
 exports.authorDeletePost = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Author delete post");
+    const params = req.params;
+    const [author, all_author_books] = await Promise.all([
+        Author.findById(params.id).exec(),
+        Book.find({ author: params.id }, "title summary").exec(),
+    ]);
+
+    if (all_author_books.length > 0) {
+        res.render("authorDelete", {
+            title: "Delete Author",
+            author,
+            authorBooks: all_author_books,
+        });
+        return;
+    }
+    
+    await Author.findByIdAndDelete(req.body.authorid);
+    res.redirect("/catalog/authors");
 };
 
 exports.authorUpdateGet = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Author update get");
+    const params = req.params;
+
+    const author = await Promise.all([
+        Author.findById(params.id).exec(),
+    ]);
+
+    if (author === null) {
+        const err = new Error("Author not found");
+        err.status = 404;
+        return next(err);
+    }
+    
+    const  author_books  = await Book.find({ author: params.id }, "title summary").exec();
+
+    res.render("authorForm", {
+        title: "Update Author",
+        author,
+        author_books,
+    });
 };
 
-exports.authorUpdatePost = async (req, res, next) => {
-    res.send("NOT IMPLEMENTED: Author update post")
-};
+exports.authorUpdatePost = [
+    body("firstName")
+        .trim()
+        .isLength({min: 1})
+        .escape()
+        .withMessage("First name must be specified.")
+        .isAlphanumeric()
+        .withMessage("First name has non-alphanumeric characters."),
+
+    body("surname")
+        .trim()
+        .isLength({min: 1})
+        .escape()
+        .withMessage("Surname must be specified.")
+        .isAlphanumeric()
+        .withMessage("Surname has non-alphanumeric characters."),
+
+    body("birthDate")
+        .optional({values: "falsy"})
+        .isISO8601()
+        .toDate(),
+
+    body("deathDate")
+        .optional({values: "falsy"})
+        .isISO8601()
+        .toDate(),
+
+    async (req, res, next) => {
+        const body = req.body;
+        const params = req.params;
+        const errors = validationResult(req);
+
+        const author = new Author({
+            firstName: body.firstName,
+            surname: body.surname,
+            birthDate: body.birthDate,
+            deathDate: body.deathDate,
+            _id: params.id,
+        });
+
+        if (!errors.isEmpty()) {
+            res.render("authorForm", {
+                title: "Update Author",
+                author,
+                error: errors.array(),
+            });
+        return;
+        }
+
+        const updatedAuthor = await Author.findByIdAndUpdate(params.id, author, {});
+        res.redirect(updatedAuthor.url);
+    }
+];

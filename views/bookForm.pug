@@ -11,7 +11,7 @@ block content
       label(for='author') Author:
       select#author.form-control(name='author' required)
         option(value='') --Please select an author--
-        for author in allAuthors
+        for author in authors
           if book
             if author._id.toString()===book.author._id.toString()
               option(value=author._id selected) #{author.name}
@@ -28,7 +28,7 @@ block content
     div.form-group
       label Genre:
       div
-        for genre in allGenres
+        for genre in genres
           div(style='display: inline; padding-right:10px;')
             if genre.checked
               input.checkbox-input(type='checkbox', name='genre', id=genre._id, value=genre._id, checked)

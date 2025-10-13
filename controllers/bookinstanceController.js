@@ -31,11 +31,11 @@ exports.bookInstanceDetail = async (req, res, next) =>{
 };
 
 exports.bookInstanceCreateGet = async (req, res, next) => {
-    const allBooks = await book.find({}, "title").sort({title: 1}).exec();
+    const all_books = await Book.find({}, "title").sort({title: 1}).exec();
 
     res.render("bookInstanceForm", {
         title: "Create Book Instance",
-        allBooks,
+        bookList: all_books,
     });
 };
 
@@ -61,14 +61,15 @@ exports.bookInstanceCreatePost = [
 
   async (req, res, next) => {
     const errors = validationResult(req);
+    const body = req.body;
 
     if (!errors.isEmpty()) {
-      const allBooks = await Book.find({}, "title").sort({ title: 1 }).exec();
+      const all_books = await Book.find({}, "title").sort({ title: 1 }).exec();
 
       res.render("bookInstanceForm", {
         title: "Create Book Instance",
-        book_list: allBooks,
-        selected_book: bookInstance.book._id,
+        bookList: all_books,
+        selectedBook: bookInstance.book._id,
         errors: errors.array(),
         bookinstance: bookInstance,
       });
@@ -76,10 +77,10 @@ exports.bookInstanceCreatePost = [
     }
 
     const bookInstance = new BookInstance({
-      book: req.body.book,
-      imprint: req.body.imprint,
-      status: req.body.status,
-      dueBack: req.body.due_back,
+      book: body.book,
+      imprint: body.imprint,
+      status: body.status,
+      dueBack: body.due_back,
     });
     await bookInstance.save();
 
