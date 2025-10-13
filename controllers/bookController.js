@@ -65,16 +65,15 @@ exports.bookDetail = async (req, res, next) => {
 };
 
 exports.bookCreateGet = async (req, res, next) => {
-  const [allAuthors, allGenres] = await Promise.all([
-    
+  const [all_authors, all_genres] = await Promise.all([
     Author.find().sort({surname: 1}).exec(),
     Genre.find().sort({name: 1}).exec(),
   ])
 
   res.render("bookForm", {
     title: "Create Book",
-    allAuthors,
-    allGenres,
+    authors: all_authors,
+    genres: all_genres,
   })
     
 };
@@ -165,7 +164,7 @@ exports.bookDeletePost = async (req, res, next) => {
 exports.bookUpdateGet = async (req, res, next) => {
   const [book, all_authors, all_genres] = await Promise.all([
     Book.findById(req.params.id).populate("author").exec(),
-    Author.find().sort({ family_name: 1 }).exec(),
+    Author.find().sort({ surname: 1 }).exec(),
     Genre.find().sort({ name: 1 }).exec(),
   ]);
 

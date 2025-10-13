@@ -70,13 +70,13 @@ exports.authorCreatePost = [
 
     async (req, res, next) =>{
         const errors = validationResult(req);
-        const payload = req.body;
+        const body = req.body;
 
         const author = new Author({
-            firstName: payload.firstName,
-            surname: payload.surname,
-            birthDate: payload.birthDate,
-            deathDate: payload.deathDate,
+            firstName: body.firstName,
+            surname: body.surname,
+            birthDate: body.birthDate,
+            deathDate: body.deathDate,
         })
 
         if(!errors.isEmpty()){
@@ -95,9 +95,9 @@ exports.authorCreatePost = [
             return false;
         }
 
-        if(birthAndDeathDateExists(payload.birthDate, payload.deathDate)){
+        if(birthAndDeathDateExists(body.birthDate, body.deathDate)){
             
-            if(deathBeforeBirth(payload.birthDate.getTime(), payload.deathDate.getTime())){
+            if(deathBeforeBirth(body.birthDate.getTime(), body.deathDate.getTime())){
                 return res.render("authorForm", {
                         title: "Create Author",
                         author,
